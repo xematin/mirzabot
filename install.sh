@@ -134,6 +134,10 @@ bot_count() {
 
 add_bot_to_list() {
     local name="$1"
+    # نام تکراری اضافه نمیکنیم
+    if echo "${BOTS:-}" | tr ',' '\n' | grep -qx "$name"; then
+        return 0
+    fi
     if [ -z "${BOTS:-}" ]; then
         BOTS="$name"
     else
@@ -150,7 +154,12 @@ next_bot_name() {
     local i=1
     while true; do
         local candidate="bot$i"
-        if [ ! -d "$BASE_DIR/$candidate" ]; then
+        local dir_exists=false
+        local in_bots=false
+        [ -d "$BASE_DIR/$candidate" ] && dir_exists=true
+        echo "${BOTS:-}" | tr ',' '\n' | grep -qx "$candidate" && in_bots=true
+        # نام آزاد = نه در دایرکتوری، نه در BOTS list
+        if [ "$dir_exists" = "false" ] && [ "$in_bots" = "false" ]; then
             echo "$candidate"
             return
         fi
@@ -536,6 +545,38 @@ action_install() {
     while [ -z "$BOT_USERNAME" ]; do
         echo -e "${R}  Cannot be empty.${W}"
         read -rp "  > " BOT_USERNAME
+    done
+
+    # ── پاکسازی ربات ناموفق قبلی (اگه وجود داره) ──────────────
+    list_bots_array
+    for b in "${BOT_LIST[@]:-}"; do
+        [ -z "$b" ] && continue
+        local bconf="$BASE_DIR/$b/.conf"
+        [ -f "$bconf" ] || { remove_bot_from_list "$b"; save_master_conf; continue; }
+        local existing_sub
+        existing_sub=$(grep "^SUBDOMAIN=" "$bconf" | cut -d= -f2)
+        # اگه subdomain یکیه یا container خراب و فایل‌ها ناقصن
+        local is_broken=false
+        if [ "$existing_sub" = "$SUBDOMAIN" ]; then is_broken=true; fi
+        if ! docker ps -a -q -f "name=mirza_$b" 2>/dev/null | grep -q . \
+           && [ ! -f "$BASE_DIR/$b/files/index.php" ]; then is_broken=true; fi
+        if [ "$is_broken" = "true" ]; then
+            warn "ربات ناموفق ($b) پیدا شد — در حال پاکسازی..."
+            local fb_sub fb_db fb_user
+            fb_sub=$(grep "^SUBDOMAIN=" "$bconf" 2>/dev/null | cut -d= -f2 || true)
+            fb_db=$(grep "^DB_NAME=" "$bconf" 2>/dev/null | cut -d= -f2 || true)
+            fb_user=$(grep "^DB_USER=" "$bconf" 2>/dev/null | cut -d= -f2 || true)
+            cd "$BASE_DIR" 2>/dev/null || true
+            docker compose stop "$b" 2>/dev/null || true
+            docker compose rm -f "$b" 2>/dev/null || true
+            [ -n "${fb_sub:-}" ] && rm -f "/etc/nginx/sites-enabled/${fb_sub}.conf" \
+                "/etc/nginx/sites-available/${fb_sub}.conf" 2>/dev/null || true
+            rm -rf "$BASE_DIR/$b"
+            remove_bot_from_list "$b"
+            save_master_conf
+            success "پاکسازی $b انجام شد."
+            break
+        fi
     done
 
     # ── Generate identifiers ──────────────────────────────────
