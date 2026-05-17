@@ -294,12 +294,28 @@ create_dockerfile() {
 FROM php:8.2-apache
 
 RUN apt-get update && apt-get install -y \
-        libzip-dev libpng-dev libonig-dev \
-        libssh2-1-dev libssh2-1 \
+        libzip-dev \
+        libpng-dev \
+        libonig-dev \
+        libssh2-1-dev \
+        libssh2-1 \
+        libcurl4-openssl-dev \
+        libxml2-dev \
+        libfreetype6-dev \
+        libjpeg62-turbo-dev \
         curl unzip wget \
+    && docker-php-ext-configure gd \
+        --with-freetype \
+        --with-jpeg \
     && docker-php-ext-install \
-        mysqli pdo pdo_mysql \
-        mbstring zip gd curl soap \
+        mysqli \
+        pdo \
+        pdo_mysql \
+        mbstring \
+        zip \
+        gd \
+        curl \
+        soap \
     && a2enmod rewrite \
     && rm -rf /var/lib/apt/lists/*
 
