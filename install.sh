@@ -117,6 +117,7 @@ save_bot_conf() {
         echo "TOKEN=$TOKEN"
         echo "CHAT_ID=$CHAT_ID"
         echo "BOT_USERNAME=$BOT_USERNAME"
+        echo "BRAND_NAME=${BRAND_NAME:-میرزا}"
     } > "$conf"
     chmod 600 "$conf"
 }
@@ -338,6 +339,37 @@ EXPOSE 80
 DOCKERFILE
 }
 
+# ── جایگزینی نام برند در فایل‌های ربات ───────────────────────────
+replace_brand_name() {
+    local files_dir="$1"
+    local brand="$2"
+
+    info "Replacing brand name with: $brand ..."
+
+    # panel/inc/layout_head.php
+    local layout="$files_dir/panel/inc/layout_head.php"
+    if [ -f "$layout" ]; then
+        sed -i "s|پنل مدیریت میرزا بات|پنل مدیریت $brand|g" "$layout"
+        sed -i "s|میرزا<span> · پنل</span>|$brand<span> · پنل</span>|g" "$layout"
+        sed -i "s|<span>میرزا</span>|<span>$brand</span>|g" "$layout"
+    fi
+
+    # panel/login.php
+    local login="$files_dir/panel/login.php"
+    if [ -f "$login" ]; then
+        sed -i "s|پنل مدیریت میرزا|پنل مدیریت $brand|g" "$login"
+        sed -i "s|نسخه 1.0 میرزا|$brand|g" "$login"
+    fi
+
+    # admin.php — پیام خوش‌آمدگویی
+    local admin="$files_dir/admin.php"
+    if [ -f "$admin" ]; then
+        sed -i "s|تیم میرزا|تیم $brand|g" "$admin"
+    fi
+
+    success "Brand name replaced: میرزا → $brand"
+}
+
 # ── Download bot PHP files from GitHub (xematin/mirzabot) ─────
 download_bot_files() {
     local target="$1/files"
@@ -420,6 +452,7 @@ server {
         proxy_set_header   X-Real-IP         \$remote_addr;
         proxy_set_header   X-Forwarded-For   \$proxy_add_x_forwarded_for;
         proxy_set_header   X-Forwarded-Proto https;
+        proxy_set_header   X-Original-IP     \$remote_addr;
         proxy_read_timeout 60s;
     }
 }
@@ -547,6 +580,13 @@ action_install() {
         read -rp "  > " BOT_USERNAME
     done
 
+    ask "Brand name (نام برند/پنل شما — جایگزین 'میرزا' میشه، مثلاً: VpnShop):"
+    read -rp "  > " BRAND_NAME
+    while [ -z "$BRAND_NAME" ]; do
+        echo -e "${R}  Cannot be empty.${W}"
+        read -rp "  > " BRAND_NAME
+    done
+
     # ── پاکسازی ربات ناموفق قبلی (اگه وجود داره) ──────────────
     list_bots_array
     for b in "${BOT_LIST[@]:-}"; do
@@ -603,6 +643,9 @@ action_install() {
     download_bot_files "$BOT_DIR"
     create_dockerfile "$BOT_DIR"
     create_config_php "$BOT_DIR"   # uses vars in scope
+
+    # ── جایگزینی نام برند در فایل‌های ربات ──────────────────────
+    replace_brand_name "$BOT_DIR/files" "$BRAND_NAME"
 
     # ── Save bot conf ─────────────────────────────────────────
     save_bot_conf "$BOT_NAME"
