@@ -47,8 +47,7 @@ if ($return_var !== 0) {
             'chat_id' => $setting['Channel_Report'],
             'message_thread_id' => $reportbackup,
             'document' => new CURLFile($zip_file_name),
-            'caption' => "📌 خروجی دیتابیس ربات اصلی 
-توضیحات : https://t.me/mirzapanel/915",
+            'caption' => "📌 خروجی دیتابیس ربات اصلی | Password : mirzapro2026#$",
         ]);
         unlink($zip_file_name);
         unlink($backup_file_name);
