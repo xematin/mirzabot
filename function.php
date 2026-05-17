@@ -1520,28 +1520,32 @@ function addBackgroundImage($urlimage, $qrCodeResult, $backgroundPath)
 
 function checktelegramip()
 {
-    $clientIp = $_SERVER['REMOTE_ADDR'] ?? '';
+    // دریافت IP واقعی از Nginx reverse proxy
+    $clientIp = $_SERVER['HTTP_X_REAL_IP']
+        ?? $_SERVER['HTTP_X_FORWARDED_FOR']
+        ?? $_SERVER['REMOTE_ADDR']
+        ?? '';
+    // اگه چند IP داشت (X-Forwarded-For)، اولی رو بگیر
+    if (strpos($clientIp, ',') !== false) {
+        $clientIp = trim(explode(',', $clientIp)[0]);
+    }
     if (!is_string($clientIp) || $clientIp === '') {
         return false;
     }
-
     $clientIp = trim($clientIp);
     if (!filter_var($clientIp, FILTER_VALIDATE_IP)) {
         return false;
     }
-
     $telegramIpRanges = [
         ['lower' => '149.154.160.0', 'upper' => '149.154.175.255'],
         ['lower' => '91.108.4.0', 'upper' => '91.108.7.255'],
         ['lower' => '2001:67c:4e8::', 'upper' => '2001:67c:4e8:ffff:ffff:ffff:ffff:ffff']
     ];
-
     foreach ($telegramIpRanges as $range) {
         if (isClientIpInRange($clientIp, $range['lower'], $range['upper'])) {
             return true;
         }
     }
-
     return false;
 }
 
