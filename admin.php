@@ -8335,26 +8335,16 @@ trojan://xyz", $backadmin, 'HTML');
     update("user", "Processing_value", $panel['name_panel'], "id", $from_id);
 } elseif ($text == "❌ حذف کانفیگ") {
     $panel = select("marzban_panel", "*", "name_panel", $user['Processing_value'], "select");
-    $listconfig = [];
-    $stmt = $pdo->prepare("SELECT * FROM manualsell WHERE codepanel = '{$panel['code_panel']}'");
-    $stmt->execute();
-    while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-        $listconfig[] = [$row['namerecord']];
+    update("user", "Processing_value_tow", $panel['code_panel'], "id", $from_id);
+    $stmt_p = $pdo->prepare("SELECT DISTINCT p.name_product FROM product p INNER JOIN manualsell m ON m.codeproduct = p.code_product AND m.codepanel = :codepanel WHERE p.Location = :loc OR p.Location = '/all'");
+    $stmt_p->execute(['codepanel' => $panel['code_panel'], 'loc' => $panel['name_panel']]);
+    $products_for_del = $stmt_p->fetchAll(PDO::FETCH_ASSOC);
+    $list_configmanual = ['keyboard' => [], 'resize_keyboard' => true];
+    $list_configmanual['keyboard'][] = [['text' => "🏠 بازگشت به منوی مدیریت"]];
+    foreach ($products_for_del as $prod_del) {
+        $list_configmanual['keyboard'][] = [['text' => $prod_del['name_product']]];
     }
-    $list_configmanual = [
-        'keyboard' => [],
-        'resize_keyboard' => true,
-    ];
-    $list_configmanual['keyboard'][] = [
-        ['text' => "🏠 بازگشت به منوی مدیریت"],
-    ];
-    foreach ($listconfig as $button) {
-        $list_configmanual['keyboard'][] = [
-            ['text' => $button[0]]
-        ];
-    }
-    $json_list_manualconfig_list = json_encode($list_configmanual);
-    sendmessage($from_id, "📌 ابتدا محصول مورد نظر را انتخاب کنید", $json_list_manualconfig_list, 'HTML');
+    sendmessage($from_id, "📌 ابتدا محصول مورد نظر را انتخاب کنید", json_encode($list_configmanual), 'HTML');
     step("getproductremove", $from_id);
 } elseif ($user['step'] == "getproductremove") {
     $codepanel_del = $user['Processing_value_tow'];
