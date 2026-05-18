@@ -4338,7 +4338,17 @@ $text_expie_agent
             }
         }
     } elseif ($marzban_list_get['type'] == "Manualsale") {
-        sendmessage($from_id, "یک گزینه را انتخاب نمایید", $optionManualsale, 'HTML');
+        $codepanel_ms = $marzban_list_get['code_panel'];
+        $panel_name_ms = $marzban_list_get['name_panel'];
+        $stmt_ms = $pdo->prepare("SELECT p.name_product, COUNT(m.id) as total, COALESCE(SUM(CASE WHEN m.status = 'selled' THEN 1 ELSE 0 END),0) as selled, COALESCE(SUM(CASE WHEN m.status != 'selled' THEN 1 ELSE 0 END),0) as remaining FROM product p LEFT JOIN manualsell m ON m.codeproduct = p.code_product AND m.codepanel = :codepanel WHERE p.Location = :panel_name GROUP BY p.id, p.name_product ORDER BY p.id ASC");
+        $stmt_ms->execute(['codepanel' => $codepanel_ms, 'panel_name' => $panel_name_ms]);
+        $rows_ms = $stmt_ms->fetchAll(PDO::FETCH_ASSOC);
+        $text_stock = "📊 موجودی کانفیگ پنل {$marzban_list_get['name_panel']}\n\n";
+        foreach ($rows_ms as $row_ms) {
+            $text_stock .= "📦 {$row_ms['name_product']} | ✅ باقی: {$row_ms['remaining']} | 🛒 فروخته: {$row_ms['selled']} | 📌 کل: {$row_ms['total']}\n➖➖➖➖➖➖➖\n";
+        }
+        $text_stock .= "\nیک گزینه را انتخاب نمایید";
+        sendmessage($from_id, $text_stock, $optionManualsale, 'HTML');
     } elseif ($marzban_list_get['type'] == "marzneshin") {
         $Check_token = token_panelm($marzban_list_get['code_panel']);
         if (isset($Check_token['access_token'])) {
@@ -8344,7 +8354,27 @@ trojan://xyz", $backadmin, 'HTML');
         ];
     }
     $json_list_manualconfig_list = json_encode($list_configmanual);
-    sendmessage($from_id, "📌 نام کانفیگی که میخواهید حذف نمایید را ارسال کنید ", $json_list_manualconfig_list, 'HTML');
+    sendmessage($from_id, "📌 ابتدا محصول مورد نظر را انتخاب کنید", $json_list_manualconfig_list, 'HTML');
+    step("getproductremove", $from_id);
+} elseif ($user['step'] == "getproductremove") {
+    $codepanel_del = $user['Processing_value_tow'];
+    $stmt_prod = $pdo->prepare("SELECT code_product FROM product WHERE name_product = :name");
+    $stmt_prod->execute(['name' => $text]);
+    $product_del = $stmt_prod->fetch(PDO::FETCH_ASSOC);
+    if (!$product_del) {
+        sendmessage($from_id, "❌ محصول پیدا نشد", null, 'HTML');
+        return;
+    }
+    update("user", "Processing_value_one", $product_del['code_product'], "id", $from_id);
+    $stmt_cfg = $pdo->prepare("SELECT * FROM manualsell WHERE codepanel = :codepanel AND codeproduct = :codeproduct AND status = 'active'");
+    $stmt_cfg->execute(['codepanel' => $codepanel_del, 'codeproduct' => $product_del['code_product']]);
+    $listconfig_del = $stmt_cfg->fetchAll(PDO::FETCH_ASSOC);
+    $kb_del = ['keyboard' => [[['text' => "🏠 بازگشت به منوی مدیریت"]]], 'resize_keyboard' => true];
+    foreach ($listconfig_del as $row_del) {
+        $kb_del['keyboard'][] = [['text' => $row_del['namerecord']]];
+    }
+    $count_del = count($listconfig_del);
+    sendmessage($from_id, "📌 کانفیگ مورد نظر برای حذف را انتخاب کنید\n\nموجودی: $count_del عدد", json_encode($kb_del), 'HTML');
     step("getnameremove", $from_id);
 } elseif ($user['step'] == "getnameremove") {
     sendmessage($from_id, "✅ کانفیگ با موفقیت حذف گردید.", $optionManualsale, 'HTML');
