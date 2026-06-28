@@ -313,7 +313,7 @@ RUN apt-get update && apt-get install -y \
         libxml2-dev \
         libfreetype6-dev \
         libjpeg62-turbo-dev \
-        curl unzip wget \
+        curl unzip wget cron default-mysql-client \
     && docker-php-ext-configure gd \
         --with-freetype \
         --with-jpeg \
@@ -331,11 +331,17 @@ RUN apt-get update && apt-get install -y \
 
 COPY ./files/ /var/www/html/
 COPY ./config.php /var/www/html/config.php
+COPY ./crontab /etc/cron.d/mirzabot
+COPY ./start.sh /start.sh
 
-RUN chown -R www-data:www-data /var/www/html \
-    && chmod -R 755 /var/www/html
+RUN chmod 0644 /etc/cron.d/mirzabot \
+    && crontab /etc/cron.d/mirzabot \
+    && chown -R www-data:www-data /var/www/html \
+    && chmod -R 755 /var/www/html \
+    && chmod +x /start.sh
 
 EXPOSE 80
+CMD ["/start.sh"]
 DOCKERFILE
 }
 
