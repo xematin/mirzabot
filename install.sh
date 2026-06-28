@@ -684,6 +684,9 @@ STARTEOF
     sed -i 's/--ssl-mode=DISABLED/--ssl=FALSE/g' "$BOT_DIR/files/cronbot/backupbot.php"
     success "backupbot.php ssl fix applied."
 
+    sed -i "s/mirzapro2026#\$/${BRAND_NAME}Backup2026/g" "$BOT_DIR/files/cronbot/backupbot.php"
+    success "backupbot.php password customized."
+
     # ── Save bot conf ─────────────────────────────────────────
     save_bot_conf "$BOT_NAME"
     add_bot_to_list "$BOT_NAME"
