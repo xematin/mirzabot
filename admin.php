@@ -7611,7 +7611,7 @@ if ($datain == "settimecornremove" && $adminrulecheck['rule'] == "administrator"
     update("user", "Processing_value", $userdata['idpanel'], "id", $from_id);
     step("home", $from_id);
 } elseif ($text == "📬 گزارش ربات" && $adminrulecheck['rule'] == "administrator") {
-    $textupdate = "💬 | گزارش ربات\n\n🔹 | اگر در عملکرد ربات با <b>باگ یا مشکلی</b> روبه‌رو شدید، لطفاً مورد را برای بررسی به ما اطلاع دهید.\n➖➖➖➖➖➖➖➖➖➖➖\n🔹 | در صورتی که با <b>باگ جدی</b> یا رفتار غیرعادی مواجه شدید، سریع‌تر گزارش دهید تا رفع شود.\n➖➖➖➖➖➖➖➖➖➖➖\n🔹 | اگر پیشنهادی برای <b>افزودن قابلیت جدید</b> دارید یا ایده‌ای برای بهبود عملکرد ربات در نظر دارید، خوشحال می‌شویم بشنویم.\n➖➖➖➖➖➖➖➖➖➖➖\n🔹 | همچنین اگر نیاز به <b>راهنمایی</b> یا کمک دارید، می‌توانید از طریق دایرکت با تیم پشتیبانی در ارتباط باشید.\n\n📩 | برای ارسال گزارش، پیشنهاد یا درخواست راهنمایی، در <b>گروه میرزا</b> پیام بگذارید:\n<a href=\"https://t.me/mirzapanelgroup\" rel=\"nofollow\" target=\"_blank\">Mirza Group</a>";
+    $textupdate = "📬 | گزارش ربات\n\n💬 | برای ارسال گزارش یا درخواست راهنمایی با ادمین پشتیبانی در ارتباط باشید:\n\n👤 | <a href=\"https://t.me/manage1t\">پشتیبانی</a>";
     sendmessage($from_id, $textupdate, null, 'HTML');
     step('home', $from_id);
 } elseif ($text == "🛠 قابلیت های پنل") {
