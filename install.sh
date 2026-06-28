@@ -680,6 +680,10 @@ STARTEOF
     # ── جایگزینی نام برند در فایل‌های ربات ──────────────────────
     replace_brand_name "$BOT_DIR/files" "$BRAND_NAME"
 
+    # ── fix backupbot ssl issue ────────────────────────────────
+    sed -i 's/--ssl-mode=DISABLED/--ssl=FALSE/g' "$BOT_DIR/files/cronbot/backupbot.php"
+    success "backupbot.php ssl fix applied."
+
     # ── Save bot conf ─────────────────────────────────────────
     save_bot_conf "$BOT_NAME"
     add_bot_to_list "$BOT_NAME"
