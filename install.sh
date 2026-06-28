@@ -648,6 +648,33 @@ action_install() {
     # ── Bot files ─────────────────────────────────────────────
     download_bot_files "$BOT_DIR"
     create_dockerfile "$BOT_DIR"
+    # ── crontab & start.sh ────────────────────────────────────
+    cat > "$BOT_DIR/crontab" << CRONEOF
+*/15 * * * * curl https://$SUBDOMAIN/cronbot/statusday.php
+*/1 * * * * curl https://$SUBDOMAIN/cronbot/croncard.php
+*/1 * * * * curl https://$SUBDOMAIN/cronbot/NoticationsService.php
+*/5 * * * * curl https://$SUBDOMAIN/cronbot/payment_expire.php
+*/1 * * * * curl https://$SUBDOMAIN/cronbot/sendmessage.php
+*/3 * * * * curl https://$SUBDOMAIN/cronbot/plisio.php
+*/1 * * * * curl https://$SUBDOMAIN/cronbot/activeconfig.php
+*/1 * * * * curl https://$SUBDOMAIN/cronbot/disableconfig.php
+*/1 * * * * curl https://$SUBDOMAIN/cronbot/iranpay1.php
+0 */5 * * * curl https://$SUBDOMAIN/cronbot/backupbot.php
+*/2 * * * * curl https://$SUBDOMAIN/cronbot/gift.php
+*/30 * * * * curl https://$SUBDOMAIN/cronbot/expireagent.php
+*/15 * * * * curl https://$SUBDOMAIN/cronbot/on_hold.php
+*/2 * * * * curl https://$SUBDOMAIN/cronbot/configtest.php
+*/15 * * * * curl https://$SUBDOMAIN/cronbot/uptime_node.php
+*/15 * * * * curl https://$SUBDOMAIN/cronbot/uptime_panel.php
+CRONEOF
+
+    cat > "$BOT_DIR/start.sh" << 'STARTEOF'
+#!/bin/bash
+service cron start
+apache2-foreground
+STARTEOF
+    chmod +x "$BOT_DIR/start.sh"
+    success "crontab and start.sh created."
     create_config_php "$BOT_DIR"   # uses vars in scope
 
     # ── جایگزینی نام برند در فایل‌های ربات ──────────────────────
